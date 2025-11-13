@@ -40,20 +40,33 @@ def sign_up(email, password, full_name, role):
         # Create user in Supabase Auth
         response = supabase.auth.sign_up({
             "email": email,
-            "password": password
+            "password": password,
+            "options": {
+                "data": {
+                    "full_name": full_name,
+                    "role": role
+                }
+            }
         })
         
         if response.user:
-            # Update profile with full name and role
+            # If email confirmation is enabled, user needs to verify email
+            if not response.session:
+                return True, "Account created! Please check your email and click the confirmation link to complete setup."
+            
+            # If no email confirmation required, update profile directly
             supabase.table('profiles').update({
                 'full_name': full_name,
                 'role': role
             }).eq('id', response.user.id).execute()
             
-            return True, "Account created successfully! Please check your email to verify your account."
+            return True, "Account created successfully!"
         return False, "Failed to create account"
     except Exception as e:
-        return False, str(e)
+        error_msg = str(e)
+        if "Invalid API key" in error_msg:
+            return False, "Authentication configuration error. Please check Supabase settings."
+        return False, f"Error creating account: {error_msg}"
 
 def sign_in(email, password):
     """Sign in an existing user"""
