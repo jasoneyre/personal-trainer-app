@@ -18,7 +18,17 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     st.info("For Streamlit Cloud: Add credentials in the app settings under 'Secrets'")
     st.stop()
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Debug info (remove after fixing)
+if st.sidebar.button("🔍 Debug Info"):
+    st.sidebar.write(f"URL: {SUPABASE_URL}")
+    st.sidebar.write(f"Key starts with: {SUPABASE_KEY[:20]}...")
+    st.sidebar.write(f"Key length: {len(SUPABASE_KEY)}")
+
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    st.error(f"Failed to create Supabase client: {str(e)}")
+    st.stop()
 
 # Configure page
 st.set_page_config(
@@ -61,12 +71,21 @@ def sign_up(email, password, full_name, role):
             }).eq('id', response.user.id).execute()
             
             return True, "Account created successfully!"
-        return False, "Failed to create account"
+        else:
+            return False, f"Failed to create account. Response: {response}"
     except Exception as e:
         error_msg = str(e)
+        st.write(f"DEBUG - Full error: {error_msg}")  # Temporary debug info
+        st.write(f"DEBUG - Error type: {type(e)}")  # Temporary debug info
+        
         if "Invalid API key" in error_msg:
-            return False, "Authentication configuration error. Please check Supabase settings."
-        return False, f"Error creating account: {error_msg}"
+            return False, "Authentication configuration error. Please check Supabase settings and API credentials."
+        elif "Invalid login credentials" in error_msg:
+            return False, "Invalid email or password format."
+        elif "Email not confirmed" in error_msg:
+            return False, "Please check your email and confirm your account before signing in."
+        else:
+            return False, f"Error creating account: {error_msg}"
 
 def sign_in(email, password):
     """Sign in an existing user"""
