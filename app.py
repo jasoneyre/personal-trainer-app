@@ -8,12 +8,14 @@ import json
 # Load environment variables
 load_dotenv()
 
-# Initialize Supabase client
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Initialize Supabase client - check both env vars and Streamlit secrets
+SUPABASE_URL = os.getenv("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("Please set SUPABASE_URL and SUPABASE_KEY in your .env file")
+    st.error("Please set SUPABASE_URL and SUPABASE_KEY in your .env file or Streamlit secrets")
+    st.info("For local development: Create a .env file with your Supabase credentials")
+    st.info("For Streamlit Cloud: Add credentials in the app settings under 'Secrets'")
     st.stop()
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
