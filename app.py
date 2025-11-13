@@ -26,8 +26,19 @@ if st.sidebar.button("🔍 Debug Info"):
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Test the connection immediately
+    test_result = supabase.auth.get_session()
+    st.sidebar.success("✅ Supabase connected successfully")
 except Exception as e:
     st.error(f"Failed to create Supabase client: {str(e)}")
+    st.error("Please check your SUPABASE_URL and SUPABASE_KEY in Streamlit secrets")
+    
+    # Show exact values for debugging
+    st.code(f"""
+Current values:
+SUPABASE_URL = "{SUPABASE_URL}"
+SUPABASE_KEY = "{SUPABASE_KEY[:50]}..."
+    """)
     st.stop()
 
 # Configure page
